@@ -1,0 +1,36 @@
+name: 自动抢票任务
+
+on:
+  schedule:
+    # 每天晚上8:05 运行（9:10的票8:10开售，提前5分钟启动）
+    - cron: '5 20 * * *'
+  workflow_dispatch:  # 允许手动触发
+
+jobs:
+  run-booking:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: 设置 Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+      - name: 安装依赖
+        run: |
+          pip install requests
+      - name: 运行抢票脚本
+        env:
+          API_KEY: ${{ secrets.API_KEY }}
+          USER_ID: ${{ secrets.USER_ID }}
+          COOKIE_STR: ${{ secrets.COOKIE_STR }}
+          XSRF_TOKEN_HEADER: ${{ secrets.XSRF_TOKEN_HEADER }}
+        run: |
+          # 生成配置文件
+          echo "API_KEY = '$API_KEY'" > config.py
+          echo "USER_ID = '$USER_ID'" >> config.py
+          echo "COOKIE_STR = '$COOKIE_STR'" >> config.py
+          echo "XSRF_TOKEN_HEADER = '$XSRF_TOKEN_HEADER'" >> config.py
+          echo "ROUTES = ['中关村校区->良乡校区']" >> config.py
+          echo "REQUEST_TIMEOUT = 10" >> config.py
+          # 运行抢票脚本
+          python auto_booking.py
